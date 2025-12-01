@@ -14,8 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Playfair Display", "Georgia", "serif"],
+        sans: ["Circular", "SF Pro Text", "system-ui", "sans-serif"],
+        display: ["SF Pro Display", "system-ui", "sans-serif"],
+        product: ["Product", "system-ui", "sans-serif"],
+        circular: ["Circular", "system-ui", "sans-serif"],
+        sf: ["SF Pro Display", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
