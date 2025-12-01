@@ -19,7 +19,8 @@ import {
   LogOut,
   Menu,
   X,
-  LayoutDashboard
+  LayoutDashboard,
+  BookMarked
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -56,6 +57,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["student", "teacher", "admin"] },
+    { href: "/dashboard/units", label: "Units", icon: BookMarked, roles: ["student", "teacher", "admin"] },
     { href: "/dashboard/assignments", label: "Assignments", icon: BookOpen, roles: ["student", "teacher", "admin"] },
     { href: "/dashboard/submissions", label: "Submissions", icon: FileText, roles: ["student", "teacher"] },
     { href: "/dashboard/admin", label: "Admin Panel", icon: Users, roles: ["admin"] },
