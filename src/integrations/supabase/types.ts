@@ -23,6 +23,7 @@ export type Database = {
           id: string
           requirements: string | null
           title: string
+          unit_id: string | null
           updated_at: string
         }
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           id?: string
           requirements?: string | null
           title: string
+          unit_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -43,9 +45,18 @@ export type Database = {
           id?: string
           requirements?: string | null
           title?: string
+          unit_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "assignments_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -120,6 +131,65 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      unit_registrations: {
+        Row: {
+          id: string
+          registered_at: string
+          student_id: string
+          unit_id: string
+        }
+        Insert: {
+          id?: string
+          registered_at?: string
+          student_id: string
+          unit_id: string
+        }
+        Update: {
+          id?: string
+          registered_at?: string
+          student_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_registrations_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

@@ -17,9 +17,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { BookOpen, Plus, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+
+interface Unit {
+  id: string;
+  code: string;
+  name: string;
+}
 
 interface Assignment {
   id: string;
@@ -29,11 +42,14 @@ interface Assignment {
   due_date: string;
   created_by: string;
   created_at: string;
+  unit_id: string | null;
+  units?: Unit | null;
 }
 
 export default function Assignments() {
   const { user, role } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -44,27 +60,53 @@ export default function Assignments() {
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [unitId, setUnitId] = useState<string>("");
 
-  const fetchAssignments = async () => {
-    let query = supabase.from("assignments").select("*").order("due_date", { ascending: true });
+  const fetchData = async () => {
+    if (!user) return;
+
+    // Fetch units for teacher to select from
+    if (role === "teacher" || role === "admin") {
+      const { data: unitsData } = await supabase
+        .from("units")
+        .select("id, code, name")
+        .eq("created_by", user.id)
+        .order("code");
+      if (unitsData) setUnits(unitsData);
+    }
+
+    // Fetch assignments with unit info
+    let query = supabase
+      .from("assignments")
+      .select("*, units(id, code, name)")
+      .order("due_date", { ascending: true });
     
     // Teachers only see their own assignments
-    if (role === "teacher" && user) {
+    if (role === "teacher") {
       query = query.eq("created_by", user.id);
     }
 
-    const { data, error } = await query;
+    const { data } = await query;
     if (data) setAssignments(data);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchAssignments();
+    fetchData();
   }, [user, role]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    if (!unitId) {
+      toast({
+        title: "Unit Required",
+        description: "Please select a unit for this assignment.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setCreating(true);
     const { error } = await supabase.from("assignments").insert({
@@ -73,6 +115,7 @@ export default function Assignments() {
       requirements,
       due_date: new Date(dueDate).toISOString(),
       created_by: user.id,
+      unit_id: unitId,
     });
 
     if (error) {
@@ -91,7 +134,8 @@ export default function Assignments() {
       setDescription("");
       setRequirements("");
       setDueDate("");
-      fetchAssignments();
+      setUnitId("");
+      fetchData();
     }
     setCreating(false);
   };
@@ -136,7 +180,28 @@ export default function Assignments() {
                 </DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
+                    <Label htmlFor="unit">Unit *</Label>
+                    <Select value={unitId} onValueChange={setUnitId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {units.length === 0 ? (
+                          <div className="p-2 text-sm text-muted-foreground">
+                            No units created yet. Create a unit first.
+                          </div>
+                        ) : (
+                          units.map((unit) => (
+                            <SelectItem key={unit.id} value={unit.id}>
+                              {unit.code} - {unit.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title *</Label>
                     <Input
                       id="title"
                       value={title}
@@ -166,7 +231,7 @@ export default function Assignments() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="due_date">Due Date</Label>
+                    <Label htmlFor="due_date">Due Date *</Label>
                     <Input
                       id="due_date"
                       type="datetime-local"
@@ -179,7 +244,7 @@ export default function Assignments() {
                     <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={creating}>
+                    <Button type="submit" disabled={creating || units.length === 0}>
                       {creating ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -203,10 +268,17 @@ export default function Assignments() {
               <p className="text-muted-foreground mb-4">
                 {isTeacherOrAdmin 
                   ? "No assignments created yet. Create your first one!" 
-                  : "No assignments available yet."}
+                  : role === "student" 
+                    ? "No assignments available. Register for units to see assignments."
+                    : "No assignments available yet."}
               </p>
               {isTeacherOrAdmin && (
                 <Button onClick={() => setCreateOpen(true)}>Create Assignment</Button>
+              )}
+              {role === "student" && (
+                <Link to="/dashboard/units">
+                  <Button>Browse Units</Button>
+                </Link>
               )}
             </CardContent>
           </Card>
@@ -220,12 +292,17 @@ export default function Assignments() {
               >
                 <Card className="border-border hover:shadow-lg transition-all hover:border-primary/50 h-full">
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg line-clamp-1">{assignment.title}</CardTitle>
+                    <div className="flex items-start justify-between gap-2">
+                      {assignment.units && (
+                        <Badge variant="outline" className="font-mono text-xs shrink-0">
+                          {assignment.units.code}
+                        </Badge>
+                      )}
                       {isPastDue(assignment.due_date) && (
                         <Badge variant="destructive">Past Due</Badge>
                       )}
                     </div>
+                    <CardTitle className="text-lg line-clamp-1 mt-2">{assignment.title}</CardTitle>
                     <CardDescription className="line-clamp-2">
                       {assignment.description || "No description provided"}
                     </CardDescription>

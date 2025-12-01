@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Units from "./pages/Units";
 import Assignments from "./pages/Assignments";
 import AssignmentDetail from "./pages/AssignmentDetail";
 import Submissions from "./pages/Submissions";
@@ -31,6 +32,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/units"
+              element={
+                <ProtectedRoute>
+                  <Units />
                 </ProtectedRoute>
               }
             />
