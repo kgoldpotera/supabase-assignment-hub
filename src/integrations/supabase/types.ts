@@ -23,7 +23,7 @@ export type Database = {
           id: string
           requirements: string | null
           title: string
-          unit_id: string | null
+          unit_id: string
           updated_at: string
         }
         Insert: {
@@ -34,7 +34,7 @@ export type Database = {
           id?: string
           requirements?: string | null
           title: string
-          unit_id?: string | null
+          unit_id: string
           updated_at?: string
         }
         Update: {
@@ -45,7 +45,7 @@ export type Database = {
           id?: string
           requirements?: string | null
           title?: string
-          unit_id?: string | null
+          unit_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -217,7 +217,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "student" | "teacher" | "admin"
